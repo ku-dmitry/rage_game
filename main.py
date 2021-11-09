@@ -1,9 +1,11 @@
+import random
+
 from kivy.config import Config
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.properties import NumericProperty
 from kivy.graphics.context_instructions import Color
-from kivy.graphics.vertex_instructions import Line
+from kivy.graphics.vertex_instructions import Line, Quad
 from kivy.properties import Clock
 from kivy.core.window import Window
 from kivy import platform
@@ -28,16 +30,22 @@ class MainWidget(Widget):
 
     FORWARD_VELOCITY = 4
     current_offset_y = 0
+    current_y_loop = 0
 
     STEERING_VELOCITY = 8
     current_offset_x = 0
     current_speed_x = 0
+
+    NB_TILES = 14
+    tiles = []
+    tiles_coordinates = []
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
         self.init_vertical_lines()
         self.init_horizontal_lines()
         self.init_tiles()
+        self.generate_tiles_coordinates()
         if self.is_desktop():
                 self.keyboard = Window.request_keyboard(self.keyboard_closed, self)
                 self.keyboard.bind(on_key_down=self.on_keyboard_down)
@@ -53,7 +61,24 @@ class MainWidget(Widget):
     def init_tiles(self):
         with self.canvas:
             Color(1, 1, 1)
-            self.tile = Quad()
+            for i in range(0, self.NB_TILES):
+                self.tiles.append(Quad())
+
+    def generate_tiles_coordinates(self):
+        current_y = 0
+
+        for i in range(len(self.tiles_coordinates)-1, -1, -1):
+            if self.tiles_coordinates[i][1] < self.current_y_loop:
+                del self.tiles_coordinates[i]
+
+        if len(self.tiles_coordinates) > 0:
+            last_coordinates = self.tiles_coordinates[-1]
+            current_y = last_coordinates[1] + 1
+
+        for i in range(len(self.tiles_coordinates), self.NB_TILES):
+            r = random.randint(-1, 1)
+            self.tiles_coordinates.append((r, current_y))
+            current_y += 1
 
     def get_line_x_from_index(self, index):
         central_line_x = self.perspective_point_x
@@ -99,13 +124,16 @@ class MainWidget(Widget):
             self.horizontal_lines[i].points = [x1, y1, x2, y2]
 
     def update_tiles(self):
-        xmin, ymin = self.get_tile_coordinates(self.ti_x, self.ti_y)
-        xmax, ymax = self.get_tile_coordinates(self.ti_x+1, self.ti_y+1)
-        x1, y1 = self.transform(xmin, ymin)
-        x2, y2 = self.transform(xmin, ymax)
-        x3, y3 = self.transform(xmax, ymin)
-        x4, y4 = self.transform(xmax, ymax)
-        self.tile.points = [x1, y1, x2, y2, x3, y3, x4, y4]
+        for i in range(0, self.NB_TILES):
+            tile = self.tiles[i]
+            tile_coordinates = self.tiles_coordinates[i]
+            xmin, ymin = self.get_tile_coordinates(tile_coordinates[0], tile_coordinates[1])
+            xmax, ymax = self.get_tile_coordinates(tile_coordinates[0]+1, tile_coordinates[1]+1)
+            x1, y1 = self.transform(xmin, ymin)
+            x2, y2 = self.transform(xmin, ymax)
+            x3, y3 = self.transform(xmax, ymax)
+            x4, y4 = self.transform(xmax, ymin)
+            tile.points = [x1, y1, x2, y2, x3, y3, x4, y4]
 
     def update(self, dt):
         time_factor = dt * 60
@@ -120,6 +148,7 @@ class MainWidget(Widget):
         if self.current_offset_y >= spacing_y:
             self.current_offset_y -= spacing_y
             self.current_y_loop += 1
+            self.generate_tiles_coordinates()
 
     @staticmethod
     def is_desktop():
