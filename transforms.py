@@ -3,12 +3,13 @@ def transform(self, x, y):
     return self.perspective(x, y)
 
 
-@staticmethod
 def transform_2d(x, y):
+    """Flat view"""
     return x, y
 
 
 def perspective(self, x, y):
+    """Horizon view"""
     lin_y = self.perspective_point_y * y / self.height
     if lin_y > self.perspective_point_y:
         lin_y = self.perspective_point_y
@@ -20,3 +21,8 @@ def perspective(self, x, y):
     tr_x = self.perspective_point_x + diff_x * factor_y
     tr_y = self.perspective_point_y - factor_y * self.perspective_point_y
     return int(tr_x), int(tr_y)
+
+
+def warp(self, x, y):
+    """Warped reality view"""
+    pass
