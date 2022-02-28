@@ -1,2 +1,2 @@
 # rage_game
-Rage game to make your buttocks warm and comfortable
+Rage game inspired by Audiosurf and Super Hexagon
