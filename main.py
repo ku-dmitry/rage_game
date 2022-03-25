@@ -2,8 +2,9 @@ import random
 
 from kivy.config import Config
 from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.properties import NumericProperty
+from kivy.lang import Builder
+from kivy.uix.relativelayout import RelativeLayout
+from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Line, Quad, Triangle
 from kivy.properties import Clock
@@ -12,14 +13,16 @@ from kivy import platform
 
 Config.set('graphics', 'width', 1280)
 Config.set('graphics', 'height', 720)
+Builder.load_file('menu.kv')
 
 
-class MainWidget(Widget):
+class MainWidget(RelativeLayout):
     from transforms import transform, transform_2d, perspective
     from controls import keyboard_closed, on_keyboard_up, on_keyboard_down, on_touch_down, on_touch_up
     perspective_point_x = NumericProperty(0)
     perspective_point_y = NumericProperty(0)
     fixed_velocity = NumericProperty(0)
+    menu_widget = ObjectProperty()
 
     V_NB_LINES = 14
     V_LINES_SPACING = .07
@@ -47,21 +50,35 @@ class MainWidget(Widget):
     PLAYER_BASE_Y = .04
     player_coordinates = [(0, 0), (0, 0), (0, 0)]
 
-    game_over_state = 0
+    game_over_state = False
+    game_started_state = False
+
+    menu_title = StringProperty("Rage Game")
+    start_button_title = StringProperty("START")
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
         self.init_vertical_lines()
         self.init_horizontal_lines()
         self.init_tiles()
-        self.generate_start_line()
-        self.generate_tiles_coordinates()
+        self.reset_game()
         self.init_player()
         if self.is_desktop():
                 self.keyboard = Window.request_keyboard(self.keyboard_closed, self)
                 self.keyboard.bind(on_key_down=self.on_keyboard_down)
                 self.keyboard.bind(on_key_up=self.on_keyboard_up)
         Clock.schedule_interval(self.update, 1 / 60)
+
+    def reset_game(self):
+        self.current_offset_y = 0
+        self.current_y_loop = 0
+        self.current_offset_x = 0
+        self.current_speed_x = 0
+        self.tiles_coordinates = []
+        self.generate_start_line()
+        self.generate_tiles_coordinates()
+
+        self.game_over_state = False
 
     def init_vertical_lines(self):
         with self.canvas:
@@ -212,12 +229,12 @@ class MainWidget(Widget):
         self.update_horizontal_lines()
         self.update_tiles()
         self.update_player()
-        if not self.game_over_state:
+        if not self.game_over_state and self.game_started_state:
             self.fixed_velocity = self.FORWARD_VELOCITY * self.height
             self.current_offset_y += self.fixed_velocity * time_factor
             self.current_offset_x += self.current_speed_x * time_factor
             spacing_y = self.H_LINES_SPACING * self.height
-            if self.current_offset_y >= spacing_y:
+            while self.current_offset_y >= spacing_y:
                 self.current_offset_y -= spacing_y
                 self.current_y_loop += 1
                 self.generate_tiles_coordinates()
@@ -225,13 +242,20 @@ class MainWidget(Widget):
             self.current_offset_x += fixed_steering * time_factor
         if not self.check_player_collision() and not self.game_over_state:
             self.game_over_state = True
-            print("Game Over!")
+            self.menu_title = "GAME OVER"
+            self.start_button_title = "AGAIN"
+            self.menu_widget.opacity = 80
 
     @staticmethod
     def is_desktop():
         if platform in ('linux', 'win', 'macosx'):
             return True
         return False
+
+    def on_start_button_pressed(self):
+        self.reset_game()
+        self.game_started_state = True
+        self.menu_widget.opacity = 0
 
 
 class RageApp(App):
