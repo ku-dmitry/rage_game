@@ -7,8 +7,10 @@ MainWidget:
             size: self.size
             source: 'images/bg.png'
     menu_widget: menu_widget
+    MenuWidget
+        id: menu_widget
     Label:
-        text: "CS"
+        text: root.current_score
         font_size: dp(20)
         size_hint: .15, .15
         pos_hint: {"x": 0, "top": 1}
@@ -17,5 +19,3 @@ MainWidget:
         font_size: dp(20)
         size_hint: .15, .15
         pos_hint: {"x": 1, "top": 1}
-    MenuWidget
-        id: menu_widget
