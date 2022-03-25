@@ -32,7 +32,7 @@ class MainWidget(RelativeLayout):
     H_LINES_SPACING = .07
     horizontal_lines = []
 
-    FORWARD_VELOCITY = .001
+    FORWARD_VELOCITY = .01
     current_offset_y = 0
     current_y_loop = 0
 
@@ -55,6 +55,9 @@ class MainWidget(RelativeLayout):
 
     menu_title = StringProperty("Rage Game")
     start_button_title = StringProperty("START")
+    current_score = StringProperty()
+
+    play_sound = None
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -63,6 +66,7 @@ class MainWidget(RelativeLayout):
         self.init_tiles()
         self.reset_game()
         self.init_player()
+        self.current_score = "SC: " + str(self.current_y_loop)
         if self.is_desktop():
                 self.keyboard = Window.request_keyboard(self.keyboard_closed, self)
                 self.keyboard.bind(on_key_down=self.on_keyboard_down)
@@ -237,6 +241,7 @@ class MainWidget(RelativeLayout):
             while self.current_offset_y >= spacing_y:
                 self.current_offset_y -= spacing_y
                 self.current_y_loop += 1
+                self.current_score = "SC: " + str(self.current_y_loop)
                 self.generate_tiles_coordinates()
             fixed_steering = self.current_speed_x * self.width
             self.current_offset_x += fixed_steering * time_factor
