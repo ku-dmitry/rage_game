@@ -1,3 +1,20 @@
 MainWidget:
 
 <MainWidget>:
+    canvas.before:
+        Rectangle:
+            size: self.size
+            source: 'images/bg.png'
+    menu_widget: menu_widget
+    Label:
+        text: "CS"
+        font_size: dp(20)
+        size_hint: .15, .15
+        pos_hint: {"x": 0, "top": 1}
+    Label:
+        text: "BS"
+        font_size: dp(20)
+        size_hint: .15, .15
+        pos_hint: {"x": 1, "top": 1}
+    MenuWidget
+        id: menu_widget
