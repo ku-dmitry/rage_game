@@ -1,7 +1,9 @@
 import random
-
+import os
+os.environ["KIVY_AUDIO"] = "ffpyplayer"
 from kivy.config import Config
 from kivy.app import App
+from kivy.core.audio import SoundLoader
 from kivy.lang import Builder
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.properties import NumericProperty, ObjectProperty, StringProperty
@@ -57,21 +59,37 @@ class MainWidget(RelativeLayout):
     start_button_title = StringProperty("START")
     current_score = StringProperty()
 
-    play_sound = None
+    init_sound = None
+    crash_sound = None
+    start_sound = None
+    music_drone = None
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
+        self.init_audio()
         self.init_vertical_lines()
         self.init_horizontal_lines()
         self.init_tiles()
         self.reset_game()
         self.init_player()
+        self.init_sound.play()
         self.current_score = "SC: " + str(self.current_y_loop)
         if self.is_desktop():
                 self.keyboard = Window.request_keyboard(self.keyboard_closed, self)
                 self.keyboard.bind(on_key_down=self.on_keyboard_down)
                 self.keyboard.bind(on_key_up=self.on_keyboard_up)
         Clock.schedule_interval(self.update, 1 / 60)
+
+    def init_audio(self):
+        self.init_sound = SoundLoader.load("sounds/startup.wav")
+        self.start_sound = SoundLoader.load("sounds/start_run.wav")
+        self.crash_sound = SoundLoader.load("sounds/crash.wav")
+        self.music_drone = SoundLoader.load("sounds/music_drone.wav")
+
+        self.music_drone.volume = 0.85
+        self.start_sound.volume = 1
+        self.crash_sound.volume = 1
+        self.init_sound.volume = 1
 
     def reset_game(self):
         self.current_offset_y = 0
@@ -81,7 +99,7 @@ class MainWidget(RelativeLayout):
         self.tiles_coordinates = []
         self.generate_start_line()
         self.generate_tiles_coordinates()
-
+        self.music_drone.play()
         self.game_over_state = False
 
     def init_vertical_lines(self):
@@ -247,6 +265,8 @@ class MainWidget(RelativeLayout):
             self.current_offset_x += fixed_steering * time_factor
         if not self.check_player_collision() and not self.game_over_state:
             self.game_over_state = True
+            self.music_drone.stop()
+            self.crash_sound.play()
             self.menu_title = "GAME OVER"
             self.start_button_title = "AGAIN"
             self.menu_widget.opacity = 80
@@ -258,6 +278,7 @@ class MainWidget(RelativeLayout):
         return False
 
     def on_start_button_pressed(self):
+        self.start_sound.play()
         self.reset_game()
         self.game_started_state = True
         self.menu_widget.opacity = 0
